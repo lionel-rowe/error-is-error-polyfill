@@ -7,9 +7,16 @@ const toStr = Function.bind.call(Function.call, Object.prototype.toString)
  * @returns `true` if the `arg` is an Error, `false` otherwise.
  */
 export const errorIsError = (arg: unknown): arg is Error => {
-	// https://github.com/tc39/proposal-is-error/issues/16
-	const str = toStr(arg)
-	return str === '[object Error]' || str === '[object DOMException]'
+	try {
+		if (arg == null || typeof arg !== 'object') return false
+
+		// https://github.com/tc39/proposal-is-error/issues/16
+		if (toStr(arg) === '[object DOMException]') return true
+
+		return structuredClone(arg) instanceof Error
+	} catch {
+		return false
+	}
 }
 
 Object.defineProperty(errorIsError, 'name', { value: 'isError' })

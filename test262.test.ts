@@ -24,10 +24,10 @@ async function getCode(testPath: string) {
 	return code
 }
 
+// Deno currently doesn't multiple realms, so we test these with `test262CrossRealm.ts`
 const ignoredTests = [
 	'non-error-objects-other-realm.js',
 	'errors-other-realm.js',
-	'fake-errors.js',
 ]
 
 Deno.test('Error.isError', async (t) => {
