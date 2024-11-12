@@ -30,7 +30,7 @@ const ignoredTests = [
 	'errors-other-realm.js',
 ]
 
-Deno.test('Error.isError', async (t) => {
+Deno.test('test262', async (t) => {
 	for await (const entry of walk('./test262/test/built-ins/Error/isError/')) {
 		if (entry.isFile && !ignoredTests.includes(entry.name)) {
 			await t.step(entry.name, async () => {

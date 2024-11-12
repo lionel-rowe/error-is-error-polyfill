@@ -22,16 +22,25 @@ await using esbuild = await (async () => {
 
 await Deno.mkdir('./temp/', { recursive: true })
 
-Deno.serve(async (req) => {
+const polyfillPath = './temp/polyfill.js'
+
+await esbuild.build({
+	entryPoints: ['./polyfill.ts'],
+	bundle: true,
+	outfile: polyfillPath,
+})
+
+const testFixturesPath = './temp/fixtures.js'
+
+await esbuild.build({
+	entryPoints: ['./_fixtures.ts'],
+	bundle: true,
+	format: 'esm',
+	outfile: testFixturesPath,
+})
+
+Deno.serve((req) => {
 	const { pathname } = new URL(req.url)
-
-	const path = './temp/polyfill.js'
-
-	await esbuild.build({
-		entryPoints: ['./polyfill.ts'],
-		bundle: true,
-		outfile: path,
-	})
 
 	if (pathname === '/') {
 		return new Response(
@@ -53,7 +62,11 @@ Deno.serve(async (req) => {
 					</script>
 
 					<script type="module">
-						import ${JSON.stringify(path)}
+						import ${JSON.stringify(polyfillPath)}
+
+						import { ERRORS, NON_ERRORS } from ${JSON.stringify(testFixturesPath)}
+						globalThis.ERRORS = ERRORS
+						globalThis.NON_ERRORS = NON_ERRORS
 
 						if (!globalThis.$262) {
 							const iframe = document.createElement('iframe')
@@ -66,8 +79,6 @@ Deno.serve(async (req) => {
 							globalThis.$262 = { createRealm: () => ({ global: iframe.contentWindow }) }
 						}
 
-						console.log(Error.isError)
-
 						window.p.resolve()
 					</script>
 
@@ -75,6 +86,19 @@ Deno.serve(async (req) => {
 						await window.p.promise
 
 						const failed = []
+
+						function checkError(items, expected, name) {
+							try {
+								for (const item of items) {
+									assert.sameValue(Error.isError(item), expected)
+								}
+							} catch {
+								failed.push(name)
+							}
+						}
+
+						checkError(ERRORS, true, 'ERRORS')
+						checkError(NON_ERRORS, false, 'NON_ERRORS')
 
 						for (const filePath of ${JSON.stringify(testFilePaths)}) {
 							const script = document.createElement('script')

@@ -1,5 +1,4 @@
-// @ts-expect-error 'this' types incompatible: 'unknown' is not assignable to '(this: any, ...args: any[]) => unknown'.
-const toStr = Function.bind.call(Function.call, Object.prototype.toString)
+import { DOM_EXCEPTION_IS_CLONABLE } from './_consts.ts'
 
 /**
  * Checks if the argument is an Error.
@@ -10,8 +9,9 @@ export const errorIsError = (arg: unknown): arg is Error => {
 	try {
 		if (arg == null || typeof arg !== 'object') return false
 
-		// https://github.com/tc39/proposal-is-error/issues/16
-		if (toStr(arg) === '[object DOMException]') return true
+		if (!DOM_EXCEPTION_IS_CLONABLE && Object.prototype.toString.call(arg) === '[object DOMException]') {
+			return true
+		}
 
 		return structuredClone(arg) instanceof Error
 	} catch {

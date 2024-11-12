@@ -1,3 +1,5 @@
+import { DOM_EXCEPTION_IS_CLONABLE } from './_consts.ts'
+
 const fakeError = {
 	constructor: Error,
 	name: 'Error',
@@ -13,12 +15,10 @@ const fakeDomException = {
 	name: 'DOMException',
 	message: '',
 	stack: new DOMException().stack,
-	// // ⚠️ will cause test failure
-	// [Symbol.toStringTag]: 'DOMException',
+	[Symbol.toStringTag]: 'DOMException',
 }
 
-// // ⚠️ will cause test failure
-// Object.setPrototypeOf(fakeDomException, DOMException.prototype);
+Object.setPrototypeOf(fakeDomException, DOMException.prototype)
 
 export const ERRORS = [
 	new Error(),
@@ -46,5 +46,6 @@ export const NON_ERRORS = [
 	new Date(),
 	new (class extends Date {})(),
 	fakeError,
-	fakeDomException,
+	// only test this if not special-cased (will fail if special-cased)
+	...(DOM_EXCEPTION_IS_CLONABLE ? [fakeDomException] : []),
 ]
